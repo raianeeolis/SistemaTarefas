@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestão de Tarefas Simples</title>
+    <!-- Carrega Tailwind CSS e Lucide Icons -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- CONTEÚDO CSS PARA ESTILO INTUITIVO -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+        body { 
+            font-family: 'Inter', sans-serif; 
+            min-height: 100vh;
+        }
+        
+        /* Fundo do Login (Mais vivo) */
+        #login-screen-container {
+            background: linear-gradient(to right, #3b82f6, #60a5fa); 
+        }
+        
+        /* Fundo do App Principal (Mais clean e suave) */
+        #app-container {
+            background-color: #f7f9fc; /* light background for clean look */
+        }
+        
+        /* Estilo simplificado do cartão de tarefa */
+        .task-card { 
+            border-radius: 1rem; /* rounded-xl */
+            padding: 1.5rem; /* p-6 */
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            transition: all 0.2s;
+            border-left-width: 6px; 
+            border-left-style: solid; 
+        }
+        .task-card:hover {
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transform: translateY(-1px);
+        }
+
+        /* Cores das Bordas de Prioridade */
+        .border-Alta { border-left-color: #ef4444; /* red-500 */ }
+        .border-Média { border-left-color: #f97316; /* orange-600 */ }
+        .border-Baixa { border-left-color: #10b981; /* emerald-500 */ }
+
+        /* Estilização para Tarefas Concluídas */
+        .task-closed {
+            background-color: #e6fef4; /* Light mint green */
+            opacity: 0.8;
+        }
+        
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center justify-start">
+
+    <!-- 1. TELA DE LOGIN/AUTENTICAÇÃO (Visível por padrão) -->
+    <div id="login-screen-container" class="fixed inset-0 flex items-center justify-center p-4 z-50 transition-opacity duration-300">
+        
+        <div id="login-card" class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-8">
+            <h1 class="text-3xl font-bold text-gray-800 text-center mb-6 flex items-center justify-center">
+                <i data-lucide="lock" class="w-7 h-7 mr-3 text-blue-600"></i>
+                Acesso Rápido
+            </h1>
+
+            <form id="loginForm" class="space-y-4 mb-4">
+                <div class="space-y-2">
+                    <label for="email" class="block text-sm font-semibold text-gray-700">Email</label>
+                    <!-- Campos pré-preenchidos para acesso rápido e intuitivo -->
+                    <input type="email" id="email" value="admin@todo.com" required
+                        class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition shadow-inner">
+                </div>
+                
+                <div class="space-y-2">
+                    <label for="password" class="block text-sm font-semibold text-gray-700">Senha</label>
+                    <input type="password" id="password" value="1234" required
+                        class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition shadow-inner">
+                </div>
+
+                <button id="loginButton" type="submit" 
+                    class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-bold text-lg transition duration-150 flex items-center justify-center disabled:opacity-50 shadow-lg">
+                    <i data-lucide="log-in" class="w-5 h-5 mr-2"></i> Entrar
+                </button>
+            </form>
+
+            <p id="auth-error-message" class="text-red-500 text-sm hidden text-center mt-3 font-medium"></p>
+            <p id="loading-auth" class="text-blue-500 mt-3 hidden text-sm font-medium flex items-center justify-center">
+                <i data-lucide="loader" class="w-4 h-4 mr-2 animate-spin"></i>
+                Autenticando...
+            </p>
+
+            <!-- Credenciais de Teste Simplificadas e Destacadas -->
+            <div class="mt-6 text-left text-xs text-gray-600 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <p class="font-bold mb-1 text-blue-800">Use estas credenciais (já preenchidas):</p>
+                <p>Usuário Admin: <span class="font-mono text-gray-800">admin@todo.com / 1234</span></p>
+                <p>Usuário Comum: <span class="font-mono text-gray-800">maria@todo.com / 1234</span></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. CONTEÚDO PRINCIPAL (Escondido até o login) -->
+    <div id="app-container" class="p-4 md:p-10 w-full hidden">
+        <div class="max-w-6xl mx-auto">
+
+            <!-- HEADER SIMPLIFICADO -->
+            <header class="mb-8 p-4 md:p-6 bg-white rounded-xl shadow-md flex justify-between items-center flex-wrap gap-4 border-b-4 border-blue-500">
+                <div class="flex items-center">
+                    <h1 class="text-2xl md:text-3xl font-extrabold text-gray-800">Gestor de Tarefas</h1>
+                    <i data-lucide="check-square" class="w-7 h-7 ml-3 text-blue-600"></i>
+                </div>
+                
+                <!-- Info do Usuário e Logout (No mesmo container para clareza) -->
+                <div class="flex items-center space-x-4">
+                    <div id="user-info-display" class="text-right text-sm">
+                        <span id="user-name-display" class="block font-semibold text-gray-700">N/A</span>
+                        <span id="user-group-display" class="block text-xs font-medium text-blue-600">N/A</span>
+                    </div>
+                    <button id="logoutButton"
+                        class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg text-sm transition duration-150 shadow-md flex items-center">
+                        <i data-lucide="log-out" class="w-4 h-4 mr-1"></i> Sair
+                    </button>
+                </div>
+            </header>
+
+            <!-- LAYOUT DE 2 COLUNAS (Formulário e Lista) -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                
+                <!-- COLUNA 1: Formulário de Adição de Registros (Intuitivo) -->
+                <div class="lg:col-span-1 bg-white p-6 rounded-xl shadow-lg h-fit sticky top-4">
+                    <h2 class="text-xl font-bold text-gray-800 mb-5 border-b pb-3 flex items-center">
+                        <i data-lucide="plus-circle" class="w-5 h-5 inline mr-2 text-blue-500"></i>
+                        Adicionar Tarefa
+                    </h2>
+                    <form id="recordForm" class="space-y-4">
+                        
+                        <input type="text" id="recordTitle" placeholder="Título da Tarefa (Ex: Comprar insumos)" required
+                               class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 shadow-inner text-sm">
+                        
+                        <textarea id="recordDescription" placeholder="Detalhes e Notas" rows="3"
+                                  class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 shadow-inner text-sm"></textarea>
+
+                        <div class="grid grid-cols-2 gap-3">
+                             <select id="recordPriority" title="Prioridade"
+                                    class="p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 shadow-inner text-sm">
+                                <option value="Média" selected>Prioridade Média</option>
+                                <option value="Alta">Prioridade Alta</option>
+                                <option value="Baixa">Prioridade Baixa</option>
+                            </select>
+
+                            <input type="date" id="recordDueDate" title="Data Limite"
+                                class="p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 shadow-inner text-sm">
+                        </div>
+                        
+                        <button type="submit" id="submitButton"
+                            class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg shadow-md transition duration-150 flex items-center justify-center">
+                            <i data-lucide="send" class="w-5 h-5 inline mr-2"></i> Salvar
+                        </button>
+                    </form>
+                    <p id="formError" class="text-red-500 mt-3 hidden text-center font-medium text-sm"></p>
+                </div>
+
+                <!-- COLUNA 2: Lista de Registros -->
+                <div class="lg:col-span-2">
+                    <h2 class="text-xl font-bold text-gray-800 mb-5 border-b pb-3 flex items-center">
+                        <i data-lucide="list-checks" class="w-5 h-5 inline mr-2 text-gray-700"></i>
+                        Tarefas Pendentes (<span id="recordCount">0</span>)
+                    </h2>
+                    
+                    <div id="recordList" class="grid grid-cols-1 gap-4">
+                        <p id="loadingIndicator" class="text-center text-gray-500">
+                            <i data-lucide="loader" class="w-5 h-5 inline mr-2 animate-spin"></i>
+                            Carregando dados...
+                        </p>
+                        <p id="noRecordsMessage" class="text-center text-gray-500 hidden p-6 bg-white rounded-lg shadow-sm">
+                            🎉 Nenhuma tarefa pendente! Adicione a primeira na coluna ao lado.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CONTEÚDO JAVASCRIPT (LÓGICA FIREBASE) -->
+    <script type="module">
+        // Firebase SDK Imports
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, addDoc, updateDoc, deleteDoc, onSnapshot, collection, query, serverTimestamp, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        
+        // Ativar logs para debug
+        setLogLevel('debug');
+
+        // SIMULAÇÃO DA TABELA USUARIOS E GRUPOS_USUARIOS
+        const SIMULATED_USERS = {
+            'admin@todo.com': { password: '1234', group: 'Administrador', role: 'Admin', name: 'Admin (Você)' },
+            'maria@todo.com': { password: '1234', group: 'Comum', role: 'Membro', name: 'Maria (Você)' }
+        };
+
+        // --- VARIÁVEIS GLOBAIS FORNECIDAS PELO AMBIENTE ---
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+        
+        let firebaseConfig = {};
+        try {
+            const configString = typeof __firebase_config !== 'undefined' ? __firebase_config : '{}';
+            firebaseConfig = JSON.parse(configString);
+        } catch (e) {
+            console.error("Erro ao fazer parse da __firebase_config:", e);
+        }
+
+        let app, db, auth;
+        let userId = null;
+        let isAuthReady = false;
+
+        // --- FUNÇÕES DE SETUP E UTILS ---
+        
+        const initializeFirebase = () => {
+            if (Object.keys(firebaseConfig).length === 0) {
+                 document.getElementById('auth-error-message').textContent = "Erro: Configuração do Firebase não encontrada.";
+                 document.getElementById('auth-error-message').classList.remove('hidden');
+                 return false;
+            }
+
+            try {
+                app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+                return true;
+            } catch (error) {
+                console.error("Erro crítico de inicialização do Firebase: ", error);
+                document.getElementById('auth-error-message').textContent = "Erro na inicialização do Firebase: " + error.message;
+                document.getElementById('auth-error-message').classList.remove('hidden');
+                return false;
+            }
+        };
+
+        // Função para obter o caminho da coleção de registros
+        const getRecordsCollection = (db, uid) => collection(db, `artifacts/${appId}/users/${uid}/records`);
+        // Função para obter o caminho da coleção de perfis públicos
+        const getUserProfilesCollection = (db) => collection(db, `artifacts/${appId}/public/data/user_profiles`);
+        
+        // Garante que o perfil do usuário exista no Firestore
+        const setupUserProfile = async (uid, validatedEmail) => {
+            const profileRef = doc(getUserProfilesCollection(db), uid);
+            const userData = SIMULATED_USERS[validatedEmail];
+
+            const newProfile = {
+                email: validatedEmail,
+                group: userData.group,
+                role: userData.role,
+                name: userData.name.replace(' (Você)', ''), // Remove o sufixo de teste
+                createdAt: serverTimestamp()
+            };
+            await setDoc(profileRef, newProfile, { merge: true });
+
+            return newProfile;
+        };
+
+        // Atualiza as informações do usuário logado na UI
+        const displayUserInfo = (profile, uid) => {
+            document.getElementById('user-name-display').textContent = profile.name;
+            document.getElementById('user-group-display').textContent = profile.group;
+        }
+
+        // Formata a data para pt-BR
+        const formatDate = (dateString) => {
+            if (!dateString) return 'Sem Data';
+            try {
+                const date = new Date(dateString);
+                // Ajuste de fuso horário
+                date.setDate(date.getDate() + 1); 
+                return date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+            } catch (e) {
+                return 'Inválida';
+            }
+        };
+
+        // Verifica se a tarefa está vencida (apenas se não estiver concluída)
+        const isExpired = (dueDate, status) => {
+            if (status === 'Concluída' || !dueDate) return false;
+            const due = new Date(dueDate);
+            const now = new Date();
+            // Ajuste para comparar apenas a data
+            due.setDate(due.getDate() + 1); 
+            now.setHours(0, 0, 0, 0);
+            return due < now;
+        };
+
+        // --- FUNÇÕES DE RENDERIZAÇÃO (Mais Intuitiva) ---
+
+        const renderRecords = (records) => {
+            const recordList = document.getElementById('recordList');
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            const noRecordsMessage = document.getElementById('noRecordsMessage');
+            const recordCount = document.getElementById('recordCount');
+
+            loadingIndicator.classList.add('hidden');
+            // Conta apenas tarefas NÃO concluídas
+            recordCount.textContent = records.filter(r => r.status !== 'Concluída').length;
+            
+            if (records.length === 0) {
+                recordList.innerHTML = '';
+                noRecordsMessage.classList.remove('hidden');
+                return;
+            } else {
+                noRecordsMessage.classList.add('hidden');
+            }
+
+            recordList.innerHTML = records.map(record => {
+                const expired = isExpired(record.dueDate, record.status);
+                const isClosed = record.status === 'Concluída';
+                // Classes de estilo e cor da borda
+                const cardClasses = `task-card bg-white border-${record.priority} ${isClosed ? 'task-closed' : 'shadow-md'}`;
+                
+                let statusBadgeColor, statusLabel, statusIcon;
+                
+                if (isClosed) {
+                    statusBadgeColor = 'bg-green-600';
+                    statusLabel = 'Concluída';
+                    statusIcon = 'check';
+                } else if (expired) {
+                    statusBadgeColor = 'bg-red-500';
+                    statusLabel = 'VENCIDA';
+                    statusIcon = 'alert-triangle';
+                } else if (record.status === 'Em Andamento') {
+                    statusBadgeColor = 'bg-blue-500';
+                    statusLabel = 'Em Andamento';
+                    statusIcon = 'loader';
+                } else {
+                    statusBadgeColor = 'bg-yellow-500';
+                    statusLabel = 'Pendente';
+                    statusIcon = 'clock';
+                }
+
+                const titleClasses = isClosed ? 'line-through text-gray-500' : 'text-gray-900';
+                const dateTextColor = expired && !isClosed ? 'text-red-600 font-bold' : 'text-gray-600';
+                
+                // Botões de Ação
+                let actionButton = '';
+                if (!isClosed) {
+                    actionButton = `
+                        <button data-id="${record.id}" data-status="Concluída" 
+                            class="js-status-btn bg-green-500 hover:bg-green-600 text-white p-2 rounded-lg text-sm transition flex items-center shadow-md">
+                            <i data-lucide="check" class="w-4 h-4 mr-1"></i> Concluir
+                        </button>`;
+                } else {
+                     actionButton = `
+                        <span class="text-green-600 font-semibold text-sm flex items-center">
+                            <i data-lucide="check-circle" class="w-4 h-4 mr-1"></i> Finalizada
+                        </span>`;
+                }
+
+                return `
+                    <div class="${cardClasses}">
+                        <div class="flex justify-between items-start mb-3">
+                            <div>
+                                <h3 class="text-lg font-bold ${titleClasses}">${record.title}</h3>
+                            </div>
+                            <!-- Prioridade e Status como Badges -->
+                            <div class="flex items-center space-x-2">
+                                <span class="px-3 py-1 rounded-full text-xs font-semibold text-white ${statusBadgeColor} flex items-center">
+                                    <i data-lucide="${statusIcon}" class="w-3 h-3 mr-1 ${statusIcon === 'loader' ? 'animate-spin' : ''}"></i>
+                                    ${statusLabel}
+                                </span>
+                                <span class="px-3 py-1 rounded-full text-xs font-semibold text-gray-800 bg-gray-200">${record.priority}</span>
+                            </div>
+                        </div>
+                        
+                        <p class="text-gray-600 mb-4 text-sm">${record.description || 'Sem detalhes.'}</p>
+                        
+                        <div class="flex justify-between items-center pt-3 border-t border-gray-100">
+                            <!-- Data Limite -->
+                            <div class="flex items-center text-sm ${dateTextColor}">
+                                <i data-lucide="calendar" class="w-4 h-4 mr-2"></i>
+                                <span>Até: ${formatDate(record.dueDate)}</span>
+                            </div>
+
+                            <!-- Botões de Ação -->
+                            <div class="flex items-center space-x-2">
+                                ${actionButton}
+                                
+                                <button data-id="${record.id}" 
+                                    class="js-delete-btn bg-red-500 hover:bg-red-600 text-white p-2 rounded-lg text-sm transition flex items-center shadow-md">
+                                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            lucide.createIcons();
+            attachEventListeners();
+        };
+        
+        // --- FUNÇÕES DE FIREBASE (CRUD) ---
+
+        const createRecord = async (recordData) => {
+            if (!isAuthReady || !userId) {
+                document.getElementById('formError').textContent = "Erro: Usuário não autenticado.";
+                document.getElementById('formError').classList.remove('hidden');
+                return;
+            }
+            try {
+                // Adiciona um novo documento na coleção privada do usuário
+                await addDoc(getRecordsCollection(db, userId), {
+                    ...recordData,
+                    status: 'Pendente', // Status inicial
+                    createdAt: serverTimestamp()
+                });
+                document.getElementById('formError').classList.add('hidden');
+            } catch (e) {
+                console.error("Erro ao adicionar documento: ", e);
+                document.getElementById('formError').textContent = "Erro ao salvar registro. Verifique o console.";
+                document.getElementById('formError').classList.remove('hidden');
+            }
+        };
+
+        const updateRecordStatus = async (recordId, newStatus) => {
+            if (!isAuthReady || !userId) return;
+            try {
+                const recordRef = doc(db, `artifacts/${appId}/users/${userId}/records`, recordId);
+                
+                const updatePayload = { status: newStatus };
+
+                // Simula o TRIGGER para `data_conclusao`
+                if (newStatus === 'Concluída') {
+                    updatePayload.data_conclusao = serverTimestamp();
+                } else if (newStatus === 'Em Andamento') {
+                    // Mantém a flexibilidade de outros status (embora só usemos 'Pendente' e 'Concluída' na UI simples)
+                    updatePayload.data_conclusao = null; 
+                }
+
+                await updateDoc(recordRef, updatePayload);
+            } catch (e) {
+                console.error("Erro ao atualizar status: ", e);
+            }
+        };
+        
+        const deleteRecord = async (recordId) => {
+            if (!isAuthReady || !userId) return;
+            try {
+                console.log(`Tentativa de deletar o registro: ${recordId}`); 
+                await deleteDoc(doc(db, `artifacts/${appId}/users/${userId}/records`, recordId));
+            } catch (e) {
+                console.error("Erro ao deletar registro: ", e);
+            }
+        };
+
+        // --- LISTENERS DE INTERFACE E FIREBASE SNAPSHOT ---
+
+        const attachEventListeners = () => {
+            // Listener para mudar status (Concluir)
+            document.querySelectorAll('.js-status-btn').forEach(button => {
+                button.onclick = () => {
+                    const recordId = button.getAttribute('data-id');
+                    const newStatus = button.getAttribute('data-status');
+                    updateRecordStatus(recordId, newStatus);
+                };
+            });
+            
+            // Listener para deletar
+            document.querySelectorAll('.js-delete-btn').forEach(button => {
+                button.onclick = () => {
+                   const recordId = button.getAttribute('data-id');
+                   deleteRecord(recordId);
+                };
+            });
+        };
+
+        const setupSnapshotListener = () => {
+            if (!isAuthReady || !userId) return;
+
+            const q = query(getRecordsCollection(db, userId));
+
+            onSnapshot(q, (snapshot) => {
+                const records = [];
+                snapshot.forEach(doc => {
+                    records.push({ id: doc.id, ...doc.data() });
+                });
+
+                // Ordenação para garantir que o mais importante/urgente apareça primeiro
+                // Ordem: Vencidas (não concluídas) > Pendentes > Em Andamento > Concluídas (no final)
+                records.sort((a, b) => {
+                    const statusOrder = { 'Pendente': 1, 'Em Andamento': 2, 'Concluída': 3 };
+                    
+                    const expiredA = isExpired(a.dueDate, a.status);
+                    const expiredB = isExpired(b.dueDate, b.status);
+
+                    // 1. Prioriza Vencidas no topo
+                    if (expiredA && !expiredB) return -1;
+                    if (!expiredA && expiredB) return 1;
+
+                    // 2. Ordena por Status
+                    const orderA = statusOrder[a.status];
+                    const orderB = statusOrder[b.status];
+                    
+                    if (orderA !== orderB) return orderA - orderB;
+
+                    // 3. Ordena por data de criação (mais recente primeiro)
+                    const dateA = a.createdAt ? a.createdAt.toMillis() : 0;
+                    const dateB = b.createdAt ? b.createdAt.toMillis() : 0;
+                    return dateB - dateA; 
+                });
+
+                renderRecords(records);
+            }, (error) => {
+                console.error("Erro ao ouvir o snapshot: ", error);
+                document.getElementById('loadingIndicator').textContent = "Erro ao carregar dados. Tente novamente.";
+            });
+        };
+        
+        // --- FUNÇÕES DE CONTROLE DE UI/AUTENTICAÇÃO ---
+
+        const toggleUI = (isAuthenticated, profile = null) => {
+            const loginScreenContainer = document.getElementById('login-screen-container');
+            const appContainer = document.getElementById('app-container');
+            
+            if (isAuthenticated && profile) {
+                // Esconde a tela de login
+                loginScreenContainer.classList.add('hidden');
+                // Mostra o container principal
+                appContainer.classList.remove('hidden'); 
+
+                document.getElementById('loading-auth').classList.add('hidden');
+                displayUserInfo(profile, userId);
+
+            } else {
+                // Mostra a tela de login
+                loginScreenContainer.classList.remove('hidden');
+                // Garante que o container principal está oculto
+                appContainer.classList.add('hidden'); 
+
+                document.getElementById('loading-auth').classList.add('hidden');
+                document.getElementById('loginButton').disabled = false;
+            }
+        };
+
+        // Lógica de Login (Simulação de credenciais + Autenticação no Firebase)
+        const handleLoginClick = async (e) => {
+            e.preventDefault();
+
+            if (!auth) {
+                 document.getElementById('auth-error-message').textContent = "Erro de inicialização do Firebase.";
+                 document.getElementById('auth-error-message').classList.remove('hidden');
+                 return;
+            }
+
+            const emailInput = document.getElementById('email').value.trim();
+            const passwordInput = document.getElementById('password').value.trim();
+
+            const loginButton = document.getElementById('loginButton');
+            const loadingIndicator = document.getElementById('loading-auth');
+            const errorDisplay = document.getElementById('auth-error-message');
+
+            loginButton.disabled = true;
+            loadingIndicator.classList.remove('hidden');
+            errorDisplay.classList.add('hidden');
+            
+            const userData = SIMULATED_USERS[emailInput];
+
+            // 1. SIMULAÇÃO DE VALIDAÇÃO DE CREDENCIAIS
+            if (!userData || userData.password !== passwordInput) {
+                errorDisplay.textContent = "Email ou senha inválidos. Tente as credenciais de teste.";
+                errorDisplay.classList.remove('hidden');
+                loginButton.disabled = false;
+                loadingIndicator.classList.add('hidden');
+                return;
+            }
+
+            // 2. AUTENTICAÇÃO REAL DO FIREBASE
+            try {
+                // Realiza o login (Anonimamente ou com Token)
+                const userCredential = initialAuthToken
+                    ? await signInWithCustomToken(auth, initialAuthToken)
+                    : await signInAnonymously(auth);
+                
+                userId = userCredential.user.uid;
+
+                // 3. Configura o perfil do usuário no Firestore
+                const userProfile = await setupUserProfile(userId, emailInput);
+                
+                // 4. Conclusão do Login
+                isAuthReady = true;
+                toggleUI(true, userProfile);
+                setupSnapshotListener();
+
+            } catch (error) {
+                console.error("Falha na autenticação do Firebase: ", error);
+                errorDisplay.textContent = "Falha na conexão com o sistema. Tente novamente.";
+                errorDisplay.classList.remove('hidden');
+                loginButton.disabled = false;
+                loadingIndicator.classList.add('hidden');
+            }
+        };
+
+        const handleLogoutClick = async () => {
+            // Recarrega a página para simular o logout/limpeza do estado de autenticação.
+            window.location.reload(); 
+        };
+
+        // --- SUBMISSÃO DO FORMULÁRIO PRINCIPAL ---
+        document.getElementById('recordForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const title = document.getElementById('recordTitle').value.trim();
+            const priority = document.getElementById('recordPriority').value;
+            const dueDate = document.getElementById('recordDueDate').value;
+            const description = document.getElementById('recordDescription').value.trim();
+
+            if (!title) {
+                document.getElementById('formError').textContent = "O título da tarefa é obrigatório.";
+                document.getElementById('formError').classList.remove('hidden');
+                return;
+            }
+
+            const recordData = {
+                title,
+                priority,
+                dueDate: dueDate || null,
+                description,
+            };
+            
+            await createRecord(recordData);
+            
+            // Limpar formulário após o sucesso
+            document.getElementById('recordForm').reset();
+            document.getElementById('recordPriority').value = 'Média';
+            document.getElementById('formError').classList.add('hidden');
+        });
+
+        // --- INICIALIZAÇÃO DA APLICAÇÃO ---
+        document.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+            
+            const initialized = initializeFirebase();
+
+            if (initialized) {
+                document.getElementById('loginForm').addEventListener('submit', handleLoginClick);
+                document.getElementById('logoutButton').addEventListener('click', handleLogoutClick);
+            }
+            
+            toggleUI(false); 
+        });
+        
+    </script>
+</body>
+</html>
