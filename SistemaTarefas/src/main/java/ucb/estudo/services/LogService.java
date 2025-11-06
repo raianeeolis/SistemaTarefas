@@ -6,7 +6,7 @@ package ucb.estudo.services;
 
 import org.springframework.stereotype.Service;
 import ucb.estudo.repositories.SessionRepository;
-import ucb.estudo.model.SessionDoc;
+import ucb.estudo.entities.SessionDoc;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.bson.Document;
 import java.time.Instant;

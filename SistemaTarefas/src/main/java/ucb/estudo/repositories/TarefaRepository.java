@@ -5,7 +5,7 @@
 package ucb.estudo.repositories;
 
 import org.springframework.data.jpa.repository.JpaRepository;
-import ucb.estudo.model.Tarefa;
+import ucb.estudo.entities.Tarefa;
 import java.util.List;
 import java.util.Optional;
 

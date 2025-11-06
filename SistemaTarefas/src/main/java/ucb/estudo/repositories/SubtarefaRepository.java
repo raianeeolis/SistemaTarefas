@@ -5,7 +5,7 @@
 package ucb.estudo.repositories;
 
 import org.springframework.data.jpa.repository.JpaRepository;
-import ucb.estudo.model.Subtarefa;
+import ucb.estudo.entities.Subtarefa;
 import java.util.List;
 
 public interface SubtarefaRepository extends JpaRepository<Subtarefa, String> {

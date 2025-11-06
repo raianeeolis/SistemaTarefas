@@ -1,4 +1,4 @@
-package ucb.estudo.model;
+package ucb.estudo.entities;
 
 import jakarta.persistence.*;
 import java.time.LocalDate;

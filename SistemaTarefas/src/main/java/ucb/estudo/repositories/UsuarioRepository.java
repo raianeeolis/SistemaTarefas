@@ -5,7 +5,7 @@
 package ucb.estudo.repositories;
 
 import org.springframework.data.jpa.repository.JpaRepository;
-import ucb.estudo.model.Usuario;
+import ucb.estudo.entities.Usuario;
 import java.util.Optional;
 
 public interface UsuarioRepository extends JpaRepository<Usuario, String> {

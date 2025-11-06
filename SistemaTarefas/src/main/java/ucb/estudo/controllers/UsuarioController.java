@@ -2,13 +2,13 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
-package ucb.estudo.control;
+package ucb.estudo.controllers;
 
 import org.springframework.web.bind.annotation.*;
 import ucb.estudo.services.UsuarioService;
-import ucb.estudo.model.Usuario;
+import ucb.estudo.entities.Usuario;
 import ucb.estudo.repositories.GrupoUsuarioRepository;
-import ucb.estudo.model.GrupoUsuarios;
+import ucb.estudo.entities.GrupoUsuarios;
 import java.util.List;
 
 @RestController

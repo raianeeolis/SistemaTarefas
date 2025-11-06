@@ -1,9 +1,9 @@
 package ucb.estudo.services;
 
 import org.springframework.stereotype.Service;
-import ucb.estudo.model.Tarefa;
+import ucb.estudo.entities.Tarefa;
 import ucb.estudo.repositories.TarefaRepository;
-import ucb.estudo.model.Usuario;
+import ucb.estudo.entities.Usuario;
 import ucb.estudo.repositories.UsuarioRepository;
 import jakarta.transaction.Transactional;
 import java.util.List;

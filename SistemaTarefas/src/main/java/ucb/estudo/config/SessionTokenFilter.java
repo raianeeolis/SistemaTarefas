@@ -16,7 +16,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
-import ucb.estudo.model.SessionDoc;
+import ucb.estudo.entities.SessionDoc;
 import ucb.estudo.repositories.SessionRepository;
 
 import java.io.IOException;

@@ -7,7 +7,7 @@ package ucb.estudo.repositories;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.mongodb.repository.MongoRepository;
-import ucb.estudo.model.SessionDoc;
+import ucb.estudo.entities.SessionDoc;
 
 public interface SessionRepository extends MongoRepository<SessionDoc, String> {
     List<SessionDoc> findByUserId(Long userId);

@@ -1,8 +1,8 @@
-package ucb.estudo.control;
+package ucb.estudo.controllers;
 
 import org.springframework.web.bind.annotation.*;
-import ucb.estudo.model.Tarefa;
-import ucb.estudo.model.SessionDoc;
+import ucb.estudo.entities.Tarefa;
+import ucb.estudo.entities.SessionDoc;
 import ucb.estudo.services.TarefaService;
 import ucb.estudo.repositories.SessionRepository;
 import org.springframework.http.ResponseEntity;
