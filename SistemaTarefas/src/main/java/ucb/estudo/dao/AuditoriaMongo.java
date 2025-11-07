@@ -1,10 +1,8 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package ucb.estudo.dao;
 
-import com.mongodb.MongoClient;
+// O import de MongoClient mudou (a classe é com.mongodb.client.MongoClient)
+import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoClients; // NOVO: Classe para criar a conexão
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import org.bson.Document;
@@ -17,7 +15,8 @@ public class AuditoriaMongo {
     private static final String DATABASE = "logs_tarefas";
 
     public static void registrarAcao(String usuario, String acao, String detalhe) {
-        try (MongoClient mongoClient = new MongoClient(HOST, PORT)) {
+        // CORREÇÃO: Usar o método estático 'create' do MongoClients (API moderna)
+        try (MongoClient mongoClient = MongoClients.create("mongodb://" + HOST + ":" + PORT)) {
             MongoDatabase db = mongoClient.getDatabase(DATABASE);
             MongoCollection<Document> collection = db.getCollection("auditoria");
 
@@ -29,7 +28,9 @@ public class AuditoriaMongo {
             collection.insertOne(log);
             System.out.println("Log inserido no MongoDB!");
         } catch (Exception e) {
-            e.printStackTrace();
+            // Em um ambiente de produção, é melhor usar um logger como SLF4J
+            System.err.println("Erro ao conectar ou registrar no MongoDB: " + e.getMessage());
+            // e.printStackTrace(); // Remova esta linha em produção
         }
     }
 }
