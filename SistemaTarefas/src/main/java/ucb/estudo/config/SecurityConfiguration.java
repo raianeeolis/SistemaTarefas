@@ -1,11 +1,8 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package ucb.estudo.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.web.SecurityFilterChain;
 
@@ -15,12 +12,22 @@ public class SecurityConfiguration {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-            .httpBasic(httpBasic -> httpBasic.init(http)) // 1. Ativa Autenticação Básica
-            .formLogin(formLogin -> formLogin.disable())  // 2. Desabilita formulário de login e redirecionamento
+            // 1. Habilita o FORM LOGIN padrão e garante que a página de login seja acessível.
+            .formLogin(form -> form.permitAll())
+            
+            // 2. Define as regras de autorização.
             .authorizeHttpRequests(auth -> auth
+                // Permite acesso irrestrito APENAS a recursos estáticos (CSS, JS, Imagens, etc.).
+                // O caminho raiz (/) NÃO está mais aqui e, portanto, será protegido.
+                .requestMatchers("/css/**", "/js/**", "/images/**").permitAll()
+                
+                // Protege TODAS as outras requisições, exigindo login.
+                // Isso inclui a página inicial (/) e todos os endpoints da API.
                 .anyRequest().authenticated()
             )
-            .csrf(csrf -> csrf.disable()); // 3. Desabilita CSRF (comum para APIs stateless)
+            
+            // 3. Desabilita o CSRF (mantendo como estava).
+            .csrf(csrf -> csrf.disable());
 
         return http.build();
     }

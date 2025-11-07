@@ -9,10 +9,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 
-/**
- *
- * @author raiane.souza
- */
+
 public class ConexaoMySQL implements ConexaoBD {
     private static final String URL = "jdbc:mysql://localhost:3306/sistematarefas";
     private static final String USUARIO = "web_admin"; 

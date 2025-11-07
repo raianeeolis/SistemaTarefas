@@ -5,10 +5,8 @@
 package ucb.estudo.dao;
 
 import java.sql.Connection;
-/**
- *
- * @author raiane.souza
- */
+
+
 public interface ConexaoBD {
     Connection obterConexao() throws Exception;
     
